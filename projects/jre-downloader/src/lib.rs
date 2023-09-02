@@ -22,7 +22,7 @@ use java::{
 compile_error!("Unsupported platform");
 
 #[cfg(unix)]
-use std::os::raw::fs::symlink;
+use std::os::unix::fs::symlink;
 
 use crate::java::FileType;
 
@@ -104,7 +104,7 @@ impl JreDownloader {
                     if !path_name.exists() {
                         println!("Creating symlink {:?} to {:?}", file.0, file.1.target);
                         #[cfg(unix)]
-                        let _ = symlink(file.1.symlink, path_name);
+                        let _ = symlink(file.1.target.unwrap(), path_name);
                     }
                 }
                 _ => continue,

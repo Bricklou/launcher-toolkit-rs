@@ -18,7 +18,7 @@ sha1 = "0.10"
 futures-util = "0"
 
 [lib]
-name = "jre-downloader"
+name = "jre_downloader"
 path = "src/lib.rs"
 
 #[[test]]

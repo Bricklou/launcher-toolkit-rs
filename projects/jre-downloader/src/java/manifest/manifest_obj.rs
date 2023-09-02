@@ -26,6 +26,8 @@ pub enum RequestType {
     JavaRuntimeBeta,
     #[serde(rename = "java-runtime-gamma")]
     JavaRuntimeGamma,
+    #[serde(rename = "java-runtime-gamma-snapshot")]
+    JavaRuntimeGammaSnapshot,
     #[serde(rename = "jre-legacy")]
     JreLegacy,
     #[serde(rename = "minecraft-java-exe")]

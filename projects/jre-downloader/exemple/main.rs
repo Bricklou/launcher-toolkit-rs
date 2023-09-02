@@ -1,4 +1,4 @@
-use minecraft_jre::{JreDownloader, java::{manifest::RequestType, download::download_manager::jre_callback::{DownloadCallback, DownloadInfos, DownloadStep}}};
+use jre_downloader::{JreDownloader, java::{manifest::RequestType, download::download_manager::jre_callback::{DownloadCallback, DownloadInfos, DownloadStep}}};
 
 #[derive(Copy, Clone)]
 struct MyDownloadCallback;
