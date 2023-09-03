@@ -1,7 +1,7 @@
 mod constants;
 pub mod error;
 pub mod java;
-use std::{collections::HashMap, path::Path};
+use std::{collections::HashMap, path::Path, os::unix::prelude::PermissionsExt};
 
 use java::{
     download::download_manager::{
@@ -90,11 +90,11 @@ impl JreDownloader {
         //loop in all of the files and create the folder if it doesn't exist
         for file in files_to_download {
             let path_name = path.join(file.0.clone());
-            match file.1.file_type {
+            match file.1.file_type.clone() {
                 crate::java::FileType::File => {
                     let _ = crate::java::download::download_manager::download_file(
-                        path_name,
-                        file.1,
+                        path_name.clone(),
+                        file.1.clone(),
                         download_callback.clone(),
                     )
                     .await; //download_file(&download.raw.url, &path_name).await?;
@@ -108,6 +108,10 @@ impl JreDownloader {
                     }
                 }
                 _ => continue,
+            }
+            #[cfg(unix)]
+            if Some(true) == file.1.executable {
+                let _ = std::fs::set_permissions(path_name, std::fs::Permissions::from_mode(0o755));
             }
         }
         download_callback.on_step(DownloadStep::END);
