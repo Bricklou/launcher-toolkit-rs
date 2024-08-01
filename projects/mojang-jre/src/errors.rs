@@ -23,4 +23,7 @@ pub enum JreError {
 
     #[error("There was an error while calculating the hash {0}")]
     HashError(#[from] hex::FromHexError),
+
+    #[error("The checksum of the file is invalid")]
+    InvalidChecksum,
 }

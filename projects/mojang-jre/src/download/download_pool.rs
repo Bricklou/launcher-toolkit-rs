@@ -9,7 +9,7 @@ use tracing::debug;
 
 use crate::{
     callback::{DownloadCallback, DownloadFileStep},
-    errors::JreResult,
+    errors::{JreError, JreResult},
     jre::{FileType, JreFile},
 };
 
@@ -22,7 +22,10 @@ pub async fn retry_download_item(
         match download_item(path.clone(), file.clone(), callback.clone()).await {
             Ok(path) => return Ok(path),
             Err(e) => {
-                debug!("Error downloading file: ({:?}) {:?}", path, e);
+                debug!(
+                    "Error downloading file (retry in 5 seconds): ({:?}) {:?}",
+                    path, e
+                );
 
                 tokio::time::sleep(std::time::Duration::from_secs(5)).await;
             }
@@ -53,6 +56,10 @@ pub async fn download_item(
         FileType::Link => {
             debug!("Creating symlink: {:?}", path);
             callback.on_file_step(&path, DownloadFileStep::Linking);
+
+            if path.exists() {
+                tokio::fs::remove_file(&path).await?;
+            }
 
             let target = file.target.unwrap();
             std::os::unix::fs::symlink(&target, &path)?;
@@ -139,7 +146,7 @@ async fn check_file_hash(
     file_path: &Path,
     hash: &String,
     callback: &Arc<dyn DownloadCallback>,
-) -> JreResult<bool> {
+) -> JreResult<()> {
     callback.on_file_step(file_path, DownloadFileStep::Checking);
     debug!("Checking file hash: {:?}", file_path);
     // Get the remote hash
@@ -153,8 +160,8 @@ async fn check_file_hash(
 
     if hash.as_slice() == remote_sha.as_slice() {
         debug!("File hash is correct: {:?}", file_path);
-        return Ok(true);
+        return Ok(());
     }
 
-    Ok(false)
+    Err(JreError::InvalidChecksum)
 }
