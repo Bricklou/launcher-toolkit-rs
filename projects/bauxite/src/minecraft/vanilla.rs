@@ -4,6 +4,7 @@ use super::{
     jsons::{
         common::McVersionType,
         manifest::{self, McVersionsList},
+        version_manifest::McVersionManifest,
     },
     version::MinecraftVersion,
 };
@@ -52,9 +53,12 @@ impl VanillaVersionBuilder {
             None => return Err(VanillaVersionError::VersionNotFound),
         };
 
+        let version_manifest = fetch_version_manifest_json(&version.url).await?;
+
         Ok(VanillaVersion {
             name: format!("Vanilla {}", version.id),
-            version: version.id.clone(),
+            id: version.id.clone(),
+            version: version_manifest,
             json_url: version.url.clone(),
             snapshot: version.version_type == McVersionType::Snapshot,
         })
@@ -75,11 +79,18 @@ pub async fn fetch_version_json() -> Result<McVersionsList, reqwest::Error> {
     Ok(resp.json::<McVersionsList>().await?)
 }
 
+pub async fn fetch_version_manifest_json(url: &str) -> Result<McVersionManifest, reqwest::Error> {
+    let resp = reqwest::get(url).await?;
+
+    Ok(resp.json::<McVersionManifest>().await?)
+}
+
 /// The Minecraft version configuration
 #[derive(Debug)]
 pub struct VanillaVersion {
     name: String,
-    version: String,
+    id: String,
+    version: McVersionManifest,
     snapshot: bool,
     /// The URL to the version json
     json_url: String,
