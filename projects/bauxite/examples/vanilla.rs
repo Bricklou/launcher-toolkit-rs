@@ -1,5 +1,5 @@
 use bauxite::minecraft::vanilla::VanillaVersionBuilder;
-use tracing::debug;
+use tracing::{debug, info};
 use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
 #[tokio::main]
@@ -10,6 +10,8 @@ async fn main() {
         .init();
 
     tracing::info!("Hello, world!");
+
+    let start = std::time::Instant::now();
 
     let vanilla_version = VanillaVersionBuilder::new("1.7.10").build().await.unwrap();
     //let latest_version = VanillaVersionBuilder::latest().build().await.unwrap();
@@ -22,6 +24,10 @@ async fn main() {
 
     let updater = bauxite::Updater::new(instance);
     updater.update().await.unwrap();
+
+    let duration = start.elapsed();
+
+    info!("Time elapsed: {:?}", duration);
 
     /*let auth_info = bauxite::AuthInfo::from_token("access_token", "username");
 

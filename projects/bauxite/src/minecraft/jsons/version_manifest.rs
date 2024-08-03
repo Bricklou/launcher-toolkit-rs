@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use serde::Deserialize;
 use time::OffsetDateTime;
 
-use crate::utils::os::OperatingSystem;
+use crate::utils::os::{OperatingSystem, OsName};
 
 use super::common::McVersionType;
 
@@ -15,7 +15,7 @@ pub struct McVersionManifest {
     arguments: Option<Arguments>,
     /// The game assets index json
     #[serde(rename = "assetIndex")]
-    asset_index: AssetIndex,
+    pub asset_index: AssetIndexArtifact,
     /// The assets version
     assets: String,
     /// Its value is 1 for all recent versions of the game (1.16.4 and above) or 0 for all others.
@@ -24,9 +24,9 @@ pub struct McVersionManifest {
     #[serde(rename = "complianceLevel", default)]
     compliance_level: u8,
     /// The Minecraft version downloads json.
-    downloads: Downloads,
+    pub downloads: Downloads,
     /// The Minecraft version ID.
-    id: String,
+    pub id: String,
     /// The version of the Java Runtime Environment
     #[serde(rename = "javaVersion", default)]
     java_version: JavaVersion,
@@ -105,27 +105,25 @@ pub struct GameRule {
 
 /// The Minecraft game asset index json.
 #[derive(Deserialize, Debug, Clone)]
-pub struct AssetIndex {
+pub struct AssetIndexArtifact {
     /// The assets version
-    id: String,
+    pub id: String,
     /// The SHA1 of the assets file
-    sha1: String,
+    pub sha1: String,
     /// The size of the version
-    size: u64,
+    pub size: u64,
     /// The total size of the version
     #[serde(alias = "totalSize")]
-    total_size: u64,
+    pub total_size: u64,
     /// The URL that the game should visit to download the assets
-    url: String,
+    pub url: String,
 }
 
 /// The Minecraft version downloads json.
 #[derive(Deserialize, Debug, Clone)]
 pub struct Downloads {
     /// The client.jar download information
-    client: Artifact,
-    /// The client mappings json
-    client_mappings: Option<Artifact>,
+    pub client: Artifact,
 }
 
 /// The Minecraft artifact json.
@@ -180,7 +178,7 @@ pub struct Library {
     pub url: Option<String>,
     /// Information about native libraries (in C) bundled with this library. Appears only when there are classifiers for natives
     #[serde(default)]
-    pub natives: HashMap<OperatingSystem, String>,
+    pub natives: HashMap<OsName, String>,
     /// Appears only in two libraries
     pub extract: Option<Extract>,
     /// The extraction rules

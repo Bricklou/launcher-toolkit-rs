@@ -50,7 +50,7 @@ pub async fn retry_download(download_info: DownloadInfo) -> Result<PathBuf, Down
 }
 
 async fn download_item(download_info: DownloadInfo) -> Result<PathBuf, DownloadError> {
-    debug!("Checkinf if the file exists: {:?}", download_info.path);
+    debug!("Checking if the file exists: {:?}", download_info.path);
 
     if download_info.path.exists() {
         debug!(
@@ -101,14 +101,9 @@ async fn download_item(download_info: DownloadInfo) -> Result<PathBuf, DownloadE
 
     debug!("File downloaded: {:?}", download_info.path);
 
-    debug!("Checking file hash: {:?}", download_info.path);
-
     match check_file_hash(&download_info).await {
-        Ok(_) => {
-            debug!("File hash is correct: {:?}", download_info.path);
-        }
+        Ok(_) => {}
         Err(_) => {
-            debug!("File hash is incorrect: {:?}", download_info.path);
             // Delete the file
             tokio::fs::remove_file(&download_info.path).await?;
         }

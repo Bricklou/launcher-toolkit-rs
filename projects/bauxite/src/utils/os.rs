@@ -1,7 +1,7 @@
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone, Hash, Eq, PartialEq)]
-pub enum OperatingSystem {
+pub enum OsName {
     #[serde(rename = "osx")]
     MacOs,
     #[serde(rename = "linux")]
@@ -12,45 +12,66 @@ pub enum OperatingSystem {
     Unknown,
 }
 
-impl OperatingSystem {
+impl OsName {
     pub fn current() -> Self {
         #[cfg(target_os = "windows")]
         {
-            OperatingSystem::Windows
+            OsName::Windows
         }
         #[cfg(target_os = "linux")]
         {
-            OperatingSystem::Linux
+            OsName::Linux
         }
         #[cfg(target_os = "macos")]
         {
-            OperatingSystem::MacOs
+            OsName::MacOs
         }
         #[cfg(not(any(target_os = "windows", target_os = "linux", target_os = "macos")))]
         {
-            OperatingSystem::Unknown
+            OsName::Unknown
         }
     }
 }
 
-impl ToString for OperatingSystem {
-    fn to_string(&self) -> String {
+impl AsRef<str> for OsName {
+    fn as_ref(&self) -> &str {
         match self {
-            OperatingSystem::MacOs => "osx".to_string(),
-            OperatingSystem::Linux => "linux".to_string(),
-            OperatingSystem::Windows => "windows".to_string(),
-            OperatingSystem::Unknown => "unknown".to_string(),
+            OsName::MacOs => "osx",
+            OsName::Linux => "linux",
+            OsName::Windows => "windows",
+            OsName::Unknown => "unknown",
         }
     }
 }
 
-impl From<String> for OperatingSystem {
-    fn from(s: String) -> Self {
-        match s.as_str() {
-            "osx" => OperatingSystem::MacOs,
-            "linux" => OperatingSystem::Linux,
-            "windows" => OperatingSystem::Windows,
-            _ => OperatingSystem::Unknown,
+#[derive(Deserialize, Debug, Clone, Hash, Eq, PartialEq)]
+pub struct OperatingSystem {
+    name: OsName,
+    arch: String,
+}
+
+impl OperatingSystem {
+    pub fn current() -> Self {
+        OperatingSystem {
+            name: OsName::current(),
+            arch: std::env::consts::ARCH.to_string(),
         }
+    }
+
+    pub fn name(&self) -> OsName {
+        self.name.clone()
+    }
+
+    pub fn name_str(&self) -> &str {
+        match self.name {
+            OsName::MacOs => "osx",
+            OsName::Linux => "linux",
+            OsName::Windows => "windows",
+            OsName::Unknown => "unknown",
+        }
+    }
+
+    pub fn arch(&self) -> &str {
+        &self.arch
     }
 }
