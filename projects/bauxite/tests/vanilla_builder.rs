@@ -1,8 +1,8 @@
 use bauxite::minecraft::{
-    vanilla::{fetch_version_json, VanillaVersion, VanillaVersionBuilder, VanillaVersionError},
+    vanilla::{fetch_version_json, VanillaVersionBuilder},
     version::MinecraftVersion,
 };
-use tokio::task::{self, JoinHandle, JoinSet};
+use tokio::task::JoinSet;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[tokio::test]
@@ -18,8 +18,14 @@ async fn check_all_versions() {
     let mut joinset = JoinSet::new();
 
     // For all versions in the manifest, try to call the builder
-    for version in manifest.versions {
-        joinset.spawn(async move { VanillaVersionBuilder::new(&version.id).build().await });
+    for version in manifest.versions.clone() {
+        joinset.spawn(async move {
+            let res = VanillaVersionBuilder::new(&version.id.clone())
+                .build()
+                .await;
+
+            (version.id, res)
+        });
     }
 
     let total = joinset.len();
@@ -27,7 +33,12 @@ async fn check_all_versions() {
     while let Some(res) = joinset.join_next().await {
         counter += 1;
 
-        let res = res.unwrap();
+        let (id, res) = res.unwrap();
+
+        if let Err(e) = &res {
+            println!("Error for version {}: {:?}", id, e);
+        }
+
         assert!(res.is_ok());
         let vanilla_version = res.unwrap();
         println!(

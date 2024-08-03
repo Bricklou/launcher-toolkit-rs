@@ -1,4 +1,5 @@
 use serde::forward_to_deserialize_any;
+use tracing::trace;
 
 /// Deserializes a string or a sequence of strings into a vector of the target type.
 pub fn deserialize_string_or_seq_string<'de, T, D>(deserializer: D) -> Result<Vec<T>, D::Error>
@@ -22,6 +23,10 @@ where
         where
             E: ::serde::de::Error,
         {
+            trace!(
+                message = "Deserializing string or sequence of strings",
+                value = v
+            );
             let value = {
                 // Try parsing as a newtype
                 let deserializer = StringNewTypeStructDeserializer(v, ::std::marker::PhantomData);
@@ -32,6 +37,7 @@ where
                 let deserializer = ::serde::de::IntoDeserializer::into_deserializer(v);
                 ::serde::Deserialize::deserialize(deserializer)
             })?;
+
             Ok(vec![value])
         }
 

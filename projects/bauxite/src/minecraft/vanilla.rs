@@ -1,11 +1,9 @@
+use tracing::debug;
+
 use crate::constants;
 
 use super::{
-    jsons::{
-        common::McVersionType,
-        manifest::{self, McVersionsList},
-        version_manifest::McVersionManifest,
-    },
+    jsons::{common::McVersionType, manifest::McVersionsList, version_manifest::McVersionManifest},
     version::MinecraftVersion,
 };
 
@@ -24,6 +22,7 @@ enum VanillaVersionType {
 impl VanillaVersionBuilder {
     /// Create a new builder with the given version.
     pub fn new(version: &str) -> Self {
+        debug!("Creating VanillaVersionBuilder with version: {}", version);
         VanillaVersionBuilder {
             version: VanillaVersionType::Version(version.into()),
             snapshot: false,
@@ -40,6 +39,7 @@ impl VanillaVersionBuilder {
 
     /// Build the [`VanillaVersion`].
     pub async fn build(self) -> Result<VanillaVersion, VanillaVersionError> {
+        debug!("Building VanillaVersion");
         // Fetch version json
         let manifest = fetch_version_json().await?;
 
@@ -74,15 +74,16 @@ pub enum VanillaVersionError {
 }
 
 pub async fn fetch_version_json() -> Result<McVersionsList, reqwest::Error> {
-    let resp = reqwest::get(constants::VANILLA_VERSIONS).await?;
-
-    Ok(resp.json::<McVersionsList>().await?)
+    debug!("Fetching version manifest list");
+    reqwest::get(constants::VANILLA_VERSIONS)
+        .await?
+        .json()
+        .await
 }
 
 pub async fn fetch_version_manifest_json(url: &str) -> Result<McVersionManifest, reqwest::Error> {
-    let resp = reqwest::get(url).await?;
-
-    Ok(resp.json::<McVersionManifest>().await?)
+    debug!("Fetching version manifest json from {}", url);
+    reqwest::get(url).await?.json().await
 }
 
 /// The Minecraft version configuration
@@ -97,22 +98,6 @@ pub struct VanillaVersion {
 }
 
 impl<'a> MinecraftVersion for VanillaVersion {
-    fn libraries_json(&self) -> &'static str {
-        "https://launchermeta.mojang.com/mc/game/version_manifest.json"
-    }
-
-    fn client(&self) -> &'static str {
-        "https://launcher.mojang.com/v1/objects/%s/%s"
-    }
-
-    fn assets_index(&self) -> &'static str {
-        "https://launchermeta.mojang.com/mc/assets/%s/%s"
-    }
-
-    fn json_version(&self) -> &'static str {
-        ""
-    }
-
     fn name(&self) -> &String {
         &self.name
     }

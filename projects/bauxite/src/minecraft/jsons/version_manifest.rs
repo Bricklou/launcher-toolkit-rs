@@ -9,7 +9,7 @@ use super::common::McVersionType;
 #[derive(Deserialize, Debug, Clone)]
 pub struct McVersionManifest {
     /// Minecraft launcher [`Arguments`] field.
-    /// This field appear in 1.13 (17w43a) and replace the [`McVersionManifest::minecraftArguments`] field.
+    /// This field appear in 1.13 (17w43a) and replace the [`McVersionManifest::minecraft_arguments`] field.
     arguments: Option<Arguments>,
     /// The game assets index json
     #[serde(rename = "assetIndex")]
@@ -19,14 +19,14 @@ pub struct McVersionManifest {
     /// Its value is 1 for all recent versions of the game (1.16.4 and above) or 0 for all others.
     /// This tag tells the launcher whether it should urge the user to be careful since this version
     /// is older and might not support the latest player safety features.
-    #[serde(rename = "complianceLevel")]
+    #[serde(rename = "complianceLevel", default)]
     compliance_level: u8,
     /// The Minecraft version downloads json.
     downloads: Downloads,
     /// The Minecraft version ID.
     id: String,
     /// The version of the Java Runtime Environment
-    #[serde(rename = "javaVersion")]
+    #[serde(rename = "javaVersion", default)]
     java_version: JavaVersion,
 
     /// The Minecraft version libraries json.
@@ -72,7 +72,9 @@ pub struct Arguments {
     jvm: Vec<Argument>,
 }
 
+/// The Minecraft argument json.
 #[derive(Deserialize, Debug, Clone)]
+#[serde(untagged)]
 pub enum Argument {
     /// A simple string argument.
     Simple(String),
@@ -80,10 +82,10 @@ pub enum Argument {
     /// This argument will be included if the condition is true.
     Conditional {
         /// The condition rules to check
-        rules: Vec<Rule>,
-        // The value of the argument
-        // Simple string will be converted into vec<string>, because the value can be a string or a vec<string>
-        #[serde(serialize_with = "crate::utils::serde::deserialize_string_or_seq_string")]
+        rules: Vec<ArgumentRule>,
+        /// The value of the argument
+        /// Simple string will be converted into vec<string>, because the value can be a string or a vec<string>
+        #[serde(deserialize_with = "crate::utils::serde::deserialize_string_or_seq_string")]
         value: Vec<String>,
     },
 }
@@ -91,11 +93,11 @@ pub enum Argument {
 /// The condition rules to check.
 /// This is used in the [`Argument::Conditional`] argument.
 #[derive(Deserialize, Debug, Clone)]
-pub struct Rule {
+pub struct ArgumentRule {
     /// The action to perform.
     action: String,
     /// The feature/OS to check.
-    #[serde(alias = "os")]
+    #[serde(default)]
     features: HashMap<String, bool>,
 }
 
@@ -122,10 +124,6 @@ pub struct Downloads {
     client: Artifact,
     /// The client mappings json
     client_mappings: Option<Artifact>,
-    /// The server download information.
-    server: Artifact,
-    /// The server mappings json
-    server_mappings: Option<Artifact>,
 }
 
 /// The Minecraft artifact json.
@@ -156,7 +154,17 @@ pub struct JavaVersion {
     //// Its value for all 1.17 snapshots is "jre-legacy" until 21w18a, and "java-runtime-alpha" since 21w19a.
     component: String,
     /// Its value for all 1.17 snapshots is 8 until 21w18a, 16 until since 1.18-pre1 and 17 since 1.18-pre2.
-    major: u32,
+    #[serde(rename = "majorVersion")]
+    major_version: u32,
+}
+
+impl Default for JavaVersion {
+    fn default() -> Self {
+        Self {
+            component: "jre-legacy".to_string(),
+            major_version: 8,
+        }
+    }
 }
 
 /// A library object
@@ -167,20 +175,34 @@ pub struct Library {
     /// The maven name for the library, in the form of `group:artifactId:version`
     name: String,
     /// The library's URL of the Maven repository (mainly used by Forge)
-    url: String,
+    url: Option<String>,
     /// Information about native libraries (in C) bundled with this library. Appears only when there are classifiers for natives
-    natives: Option<HashMap<String, String>>,
+    #[serde(default)]
+    natives: HashMap<String, String>,
     /// Appears only in two libraries
     extract: Option<Extract>,
     /// The extraction rules
-    rules: Option<Rule>,
+    /// Omit if empty
+    #[serde(default)]
+    rules: Vec<LibraryRule>,
+}
+
+/// The library rule
+#[derive(Deserialize, Debug, Clone)]
+pub struct LibraryRule {
+    /// The action to perform
+    action: String,
+    /// The OS to check
+    #[serde(default)]
+    os: HashMap<String, String>,
 }
 
 /// The library's download information
 #[derive(Deserialize, Debug, Clone)]
 pub struct LibraryDownloads {
-    /// The artifact download information
-    artifact: ArtifactFile,
+    /// The artifact download information.
+    /// This field is optional may not appear in some libraries.
+    artifact: Option<ArtifactFile>,
     /// The classifiers download information
     /// This field is optional and only appear in some libraries.
     classifiers: Option<HashMap<String, ArtifactFile>>,
