@@ -16,15 +16,14 @@ async fn main() {
 
     debug!("{:?}", vanilla_version);
 
-    /*let instance = bauxite::InstanceBuilder::new()
+    let instance = bauxite::InstanceBuilder::new(vanilla_version)
         .with_output_dir("tmp")
-        .with_vanilla_version(Arc::new(vanilla_version))
         .build();
 
     let updater = bauxite::Updater::new(instance);
     updater.update().await.unwrap();
 
-    let auth_info = bauxite::AuthInfo::from_token("access_token", "username");
+    /*let auth_info = bauxite::AuthInfo::from_token("access_token", "username");
 
     let launcher = bauxite::LauncherBuilder::new(instance)
         .with_java_path("java")

@@ -3,6 +3,8 @@ use std::collections::HashMap;
 use serde::Deserialize;
 use time::OffsetDateTime;
 
+use crate::utils::os::OperatingSystem;
+
 use super::common::McVersionType;
 
 /// The Minecraft version root manifest json.
@@ -30,7 +32,7 @@ pub struct McVersionManifest {
     java_version: JavaVersion,
 
     /// The Minecraft version libraries json.
-    libraries: Vec<Library>,
+    pub libraries: Vec<Library>,
 
     /// Logging information for Log4j configuration
     logging: Option<Logging>,
@@ -67,22 +69,22 @@ pub struct McVersionManifest {
 #[derive(Deserialize, Debug, Clone)]
 pub struct Arguments {
     /// The game arguments.
-    game: Vec<Argument>,
+    game: Vec<Argument<GameRule>>,
     /// The jvm arguments.
-    jvm: Vec<Argument>,
+    jvm: Vec<Argument<OsRule>>,
 }
 
 /// The Minecraft argument json.
 #[derive(Deserialize, Debug, Clone)]
 #[serde(untagged)]
-pub enum Argument {
+pub enum Argument<Rule> {
     /// A simple string argument.
     Simple(String),
     /// A conditional argument.
     /// This argument will be included if the condition is true.
     Conditional {
         /// The condition rules to check
-        rules: Vec<ArgumentRule>,
+        rules: Vec<Rule>,
         /// The value of the argument
         /// Simple string will be converted into vec<string>, because the value can be a string or a vec<string>
         #[serde(deserialize_with = "crate::utils::serde::deserialize_string_or_seq_string")]
@@ -93,10 +95,10 @@ pub enum Argument {
 /// The condition rules to check.
 /// This is used in the [`Argument::Conditional`] argument.
 #[derive(Deserialize, Debug, Clone)]
-pub struct ArgumentRule {
+pub struct GameRule {
     /// The action to perform.
     action: String,
-    /// The feature/OS to check.
+    /// The feature to check.
     #[serde(default)]
     features: HashMap<String, bool>,
 }
@@ -130,11 +132,11 @@ pub struct Downloads {
 #[derive(Deserialize, Debug, Clone)]
 pub struct Artifact {
     /// The SHA1 of the artifact
-    sha1: String,
+    pub sha1: String,
     /// The size of the artifact
-    size: u64,
+    pub size: u64,
     /// The URL where the artifact is hosted
-    url: String,
+    pub url: String,
 }
 
 /// The Minecraft artifact file json.
@@ -142,10 +144,10 @@ pub struct Artifact {
 #[derive(Deserialize, Debug, Clone)]
 pub struct ArtifactFile {
     /// The path of the artifact
-    path: String,
+    pub path: String,
     /// The other artifact information
     #[serde(flatten)]
-    artifact: Artifact,
+    pub artifact: Artifact,
 }
 
 /// The version of the Java Runtime Environment.
@@ -171,30 +173,51 @@ impl Default for JavaVersion {
 #[derive(Deserialize, Debug, Clone)]
 pub struct Library {
     //// The library's download information
-    downloads: LibraryDownloads,
+    pub downloads: LibraryDownloads,
     /// The maven name for the library, in the form of `group:artifactId:version`
-    name: String,
+    pub name: String,
     /// The library's URL of the Maven repository (mainly used by Forge)
-    url: Option<String>,
+    pub url: Option<String>,
     /// Information about native libraries (in C) bundled with this library. Appears only when there are classifiers for natives
     #[serde(default)]
-    natives: HashMap<String, String>,
+    pub natives: HashMap<OperatingSystem, String>,
     /// Appears only in two libraries
-    extract: Option<Extract>,
+    pub extract: Option<Extract>,
     /// The extraction rules
     /// Omit if empty
     #[serde(default)]
-    rules: Vec<LibraryRule>,
+    pub rules: Vec<OsRule>,
 }
 
-/// The library rule
+/// The os rule
 #[derive(Deserialize, Debug, Clone)]
-pub struct LibraryRule {
+pub struct OsRule {
     /// The action to perform
-    action: String,
+    pub action: RuleAction,
     /// The OS to check
     #[serde(default)]
-    os: HashMap<String, String>,
+    pub os: HashMap<String, String>,
+}
+
+/// The rule action
+/// This is used in the [`LibraryRule`] struct.
+#[derive(Deserialize, Debug, Clone)]
+pub enum RuleAction {
+    /// The rule action to exclude the library
+    #[serde(rename = "allow")]
+    Allow,
+    /// The rule action to exclude the library
+    #[serde(rename = "disallow")]
+    Disallow,
+}
+
+impl Into<bool> for RuleAction {
+    fn into(self) -> bool {
+        match self {
+            RuleAction::Allow => true,
+            RuleAction::Disallow => false,
+        }
+    }
 }
 
 /// The library's download information
@@ -202,10 +225,10 @@ pub struct LibraryRule {
 pub struct LibraryDownloads {
     /// The artifact download information.
     /// This field is optional may not appear in some libraries.
-    artifact: Option<ArtifactFile>,
+    pub artifact: Option<ArtifactFile>,
     /// The classifiers download information
     /// This field is optional and only appear in some libraries.
-    classifiers: Option<HashMap<String, ArtifactFile>>,
+    pub classifiers: Option<HashMap<String, ArtifactFile>>,
 }
 
 /// Extract information

@@ -98,6 +98,10 @@ pub struct VanillaVersion {
 }
 
 impl<'a> MinecraftVersion for VanillaVersion {
+    fn id(&self) -> &String {
+        &self.id
+    }
+
     fn name(&self) -> &String {
         &self.name
     }
@@ -108,5 +112,9 @@ impl<'a> MinecraftVersion for VanillaVersion {
 
     fn json_url(&self) -> &String {
         &self.json_url
+    }
+
+    fn manifest(&self) -> &McVersionManifest {
+        &self.version
     }
 }
