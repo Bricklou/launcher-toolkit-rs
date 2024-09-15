@@ -15,4 +15,3 @@ have been made:
   without any problem.
 - **Hooks**: often, libraries only download and install files, but many servers require more advanced setups like anti-cheat check. This library
   should be able to run some hooks during installation and before launching the game, to ensure if everything is okay.
-- **No GUI**: the library should be usable in a CLI environment, and should not require any GUI to work. This is why the library will not
