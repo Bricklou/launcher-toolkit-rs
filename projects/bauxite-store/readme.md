@@ -26,11 +26,10 @@ Bauxite Store employs an efficient method for managing Minecraft files by levera
    >
    > ```json
    > {
-   >   "mods/mod1.jar": {
+   >   "mods/mod1.jar@1.0.0": {
    >     "hash": "abc123",
    >     "size": 123456,
-   >     "permissions": 640,
-   >     "version": "1.0.0"
+   >     "permissions": 640
    >   }
    > }
    > ```
